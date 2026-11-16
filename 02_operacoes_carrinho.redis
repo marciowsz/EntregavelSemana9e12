@@ -1,0 +1,27 @@
+ECHO "=== PARTE 2 (Cache) - Adicionar item, ler carrinho e definir TTL ==="
+DEL cart:user:101
+ECHO "--- 1. Adicionar itens ao carrinho do usuario 101 (HSET) ---"
+HSET cart:user:101 produto:99 1
+HSET cart:user:101 produto:42 2
+ECHO "--- 2. Usuario clica de novo em adicionar o produto 99: soma +2 sem reescrever o carrinho (HINCRBY) ---"
+HINCRBY cart:user:101 produto:99 2
+ECHO "--- 3. Ler o carrinho completo (HGETALL) ---"
+HGETALL cart:user:101
+ECHO "--- Consultas pontuais: quantidade de um item (HGET) e numero de itens distintos (HLEN) ---"
+HGET cart:user:101 produto:99
+HLEN cart:user:101
+ECHO "--- 4. Remover um item (HDEL) ---"
+HDEL cart:user:101 produto:42
+HGETALL cart:user:101
+ECHO "--- 5. Definir TTL de 24 horas = 86400 s (simula abandono do carrinho) ---"
+EXPIRE cart:user:101 86400
+TTL cart:user:101
+ECHO "--- 6. A cada interacao do usuario, renova-se o TTL (sliding expiration) ---"
+HINCRBY cart:user:101 produto:99 1
+EXPIRE cart:user:101 86400
+TTL cart:user:101
+ECHO "--- 7. Simulando abandono: carrinho de visitante com TTL de 5 segundos ---"
+HSET cart:session:demo produto:7 1
+EXPIRE cart:session:demo 5
+TTL cart:session:demo
+ECHO "(aguarde ~6 segundos e execute: EXISTS cart:session:demo -> deve retornar 0 e HGETALL cart:session:demo -> lista vazia)"

@@ -1,0 +1,13 @@
+ECHO "=== PARTE 1 (Cache) - Estrutura de chaves do carrinho de compras ==="
+ECHO "Padrao de chaves:  cart:user:{id_usuario}  (usuario logado)  |  cart:session:{id_sessao}  (visitante anonimo)"
+ECHO "Estrutura: HASH  ->  campo = produto:{produto_id}  |  valor = quantidade (inteiro)"
+HSET cart:user:1 produto:2 1 produto:3 2
+HSET cart:user:2 produto:1 1
+HSET cart:session:a1b2c3 produto:6 1 produto:5 3
+ECHO "--- Carrinhos criados ---"
+HGETALL cart:user:1
+HGETALL cart:user:2
+HGETALL cart:session:a1b2c3
+ECHO "--- Tipo das chaves (esperado: hash) ---"
+TYPE cart:user:1
+TYPE cart:session:a1b2c3

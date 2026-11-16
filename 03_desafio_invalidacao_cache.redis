@@ -1,0 +1,37 @@
+ECHO "=== PARTE 3 (Cache - Bonus) - Invalidacao do carrinho no checkout ==="
+ECHO "Estrategia: o pedido e gravado no banco principal PRIMEIRO. So depois de confirmado, a chave do carrinho e removida."
+ECHO "Assim, se a gravacao do pedido falhar, o carrinho continua no cache e o usuario nao perde os itens."
+
+ECHO "--- Preparacao: carrinho do usuario 101 com TTL ---"
+DEL cart:user:101
+HSET cart:user:101 produto:99 3 produto:42 1
+EXPIRE cart:user:101 86400
+HGETALL cart:user:101
+TTL cart:user:101
+
+ECHO "--- (Aplicacao) 1. Ler o carrinho para montar o pedido ---"
+HGETALL cart:user:101
+ECHO "--- (Aplicacao) 2. INSERT do pedido no banco principal -> confirmado com sucesso ---"
+
+ECHO "--- 3. Invalidar o cache do carrinho no checkout (DEL) ---"
+DEL cart:user:101
+ECHO "--- Verificacao: a chave nao existe mais (EXISTS = 0) e o carrinho esta vazio ---"
+EXISTS cart:user:101
+HGETALL cart:user:101
+TTL cart:user:101
+
+ECHO "--- Alternativa para carrinhos grandes: UNLINK remove a chave em segundo plano, sem bloquear o Redis ---"
+HSET cart:user:102 produto:1 1
+UNLINK cart:user:102
+EXISTS cart:user:102
+
+ECHO "--- Extra: ao fazer login, o carrinho de visitante e mesclado ao do usuario e depois invalidado ---"
+DEL cart:session:xyz789 cart:user:103
+HSET cart:session:xyz789 produto:5 2 produto:6 1
+HSET cart:user:103 produto:5 1
+ECHO "(aplicacao le o carrinho da sessao com HGETALL e soma cada item no carrinho do usuario com HINCRBY)"
+HINCRBY cart:user:103 produto:5 2
+HINCRBY cart:user:103 produto:6 1
+DEL cart:session:xyz789
+HGETALL cart:user:103
+EXISTS cart:session:xyz789
